@@ -49,7 +49,7 @@ delete-policy:
 - 运行并指定配置文件位置
 
 ```bash
-registry-manager -f delete_policy.yml
+registry-manager delete -c delete_policy.yml
 ```
 
 ### 存储回收
