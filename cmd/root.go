@@ -100,5 +100,5 @@ func initConfig() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("%+v",global.Manager)
+	glog.V(4).Infof("%+v", global.Manager)
 }
