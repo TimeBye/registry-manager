@@ -137,5 +137,6 @@ func (d *DeletePolicy) NeedDelete(tag string) bool {
 		glog.V(2).Infof("删除 %s ，因为匹配删除关键字: %s", tag, d.Tags.Include.KeysRegex)
 		return true
 	}
+	glog.V(2).Infof("跳过 %s ，没有任何匹配项，默认保留", tag)
 	return false
 }
