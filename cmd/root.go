@@ -15,23 +15,24 @@
 package cmd
 
 import (
-	"flag"
+	"bytes"
 	"fmt"
-	"github.com/spf13/pflag"
+	"github.com/TimeBye/registry-manager/pkg/global"
+	"github.com/TimeBye/registry-manager/pkg/types"
 	"os"
+	"strings"
 
-	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/TimeBye/registry-manager/pkg/types"
+	"github.com/x-mod/glog"
+	"gopkg.in/yaml.v2"
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "registry-manager",
 	Short: "Docker 镜像库管理工具",
-	Long:  `registry-manager 是一个 Docker 镜像库管理小工具，可以实现按指定规则删除镜像 tag`,
+	Long:  `registry-manager 是一个 Docker 镜像库管理小工具`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) {},
@@ -47,39 +48,57 @@ func Execute() {
 }
 
 func init() {
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	flag.CommandLine.Parse([]string{})
-	flag.Set("logtostderr", "true")
-
 	cobra.OnInitialize(initConfig)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-	rootCmd.PersistentFlags().StringVarP(&types.CfgFile, "config", "c", "",
-		"配置文件路径，默认当前目录下 registry-manager.yml 文件")
+	rootCmd.PersistentFlags().IntVarP(&global.Verbosity, "verbosity", "v", 1, "INFO信息显示级别")
+	rootCmd.PersistentFlags().IntVarP(&global.Retry, "retry", "r", 3, "失败重试次数")
+	rootCmd.PersistentFlags().IntVarP(&global.ProcessLimit, "process-limit", "p", 3, "并发同步数量")
+	rootCmd.PersistentFlags().StringVarP(
+		&global.CfgFile, "config", "c", "", "config file (default is ./config.yaml)")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if types.CfgFile != "" {
+	glog.Open(glog.LogToStderr(true),
+		glog.Verbosity(global.Verbosity),
+	)
+	defer glog.Close()
+	if global.CfgFile != "" {
 		// Use config file from the flag.
-		viper.SetConfigFile(types.CfgFile)
+		viper.SetConfigFile(global.CfgFile)
 	} else {
-		// Search config in home directory with name ".registry-manager" (without extension).
+		// Search config in home directory with name ".sync" (without extension).
 		viper.AddConfigPath(".")
-		viper.SetConfigName("registry-manager")
+		viper.SetConfigName("config")
 	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		glog.Infof("使用配置文件: %s", viper.ConfigFileUsed())
+	global.Manager = &types.Config{
+		DeletePolicy: types.DeletePolicy{
+			Start:    0,
+			DryRun:   true,
+			MixCount: 10,
+		},
 	}
-	err := viper.Unmarshal(&types.Manager)
+	b, err := yaml.Marshal(global.Manager)
 	if err != nil {
 		panic(err)
 	}
-	types.Manager.Init()
+	defaultConfig := bytes.NewReader(b)
+	if err := viper.MergeConfig(defaultConfig); err != nil {
+		panic(err)
+	}
+
+	viper.AutomaticEnv() // read in environment variables that match
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	if err := viper.MergeInConfig(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	err = viper.Unmarshal(global.Manager)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("%+v",global.Manager)
 }

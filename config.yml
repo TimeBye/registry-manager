@@ -1,0 +1,66 @@
+# 所有镜像仓库地址
+registries:
+  # 镜像仓库名称，自定义即可
+  harbor:
+    # 镜像仓库地址
+    registry: https://harbor.io
+    # 镜像仓库管理员用户名
+    username: admin
+    # 镜像仓库管理员密码
+    password: harbor12345
+    # 是否跳过证书检查
+    insecure: false
+  aliyun:
+    registry: https://registry.aliyun.com
+    username: admin
+    password: harbor12345
+    insecure: false
+
+# 删除策略
+delete-policy:
+  # 需要删除的仓库名
+  registries:
+    - harbor
+  repositories:
+  # 若执行中断，指定起始仓库序号，默认 0
+  start: 0
+  # 仅模拟运行，不真实删除，默认启用
+  dry-run: true
+  # 保留会被删除的镜像个数，默认 10
+  mix-count: 10
+  # 是否删除不符合语义化版本的 tag
+  sem-ver: false
+  # 镜像tag删除策略
+  tags:
+    # 删除策略
+    include:
+      # 按关键字进行删除
+      keys: develop,release,hotfix,feature,2018,2019
+      # 按正则表达式删除
+      regex:
+    # 排除策略，删除策略与排除策略都匹配，以排除策略为准
+    exclude:
+      # 按关键字进行排除
+      keys:
+      # 按正则表达式排除
+      regex: ^latest$|^master$|^[Vv]?(\d+(\.\d+){1,2})$
+
+# 同步策略
+sync-policy:
+  # 源仓库
+  from: harbor
+  # 目标仓库
+  to: aliyun
+  # 需要同步的镜像
+  repositories:
+    # 若指定tag，则只同步该镜像
+    - devlop/myapp:0.1.0
+    # 未指定tag，则同步所有tag
+    - devlop/hello-world
+  # 替换规则
+  replace:
+    - old: devlop
+      new: prod
+  # 需要同步的tag筛选规则
+  filters:
+    - '^\d+\.\d+\.\d+(-alpha\.\d+)?$'

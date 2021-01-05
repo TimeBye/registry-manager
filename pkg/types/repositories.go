@@ -12,33 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package utils
+package types
 
-import (
-	"github.com/x-mod/glog"
-)
-
-func CheckErr(err error) {
-	if err != nil {
-		glog.Error(err)
-	}
+type Registry struct {
+	Url      string `mapstructure:"registry"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+	Insecure bool   `mapstructure:"insecure"`
 }
 
-func Difference(sliceA []string, sliceB []string) []string {
-	diff := make([]string, 0)
-	diffMap := make(map[string]int)
-
-	for _, v := range sliceA {
-		diffMap[v] = 1
-	}
-	for _, v := range sliceB {
-		diffMap[v] = diffMap[v] - 1
-	}
-
-	for k, v := range diffMap {
-		if v > 0 {
-			diff = append(diff, k)
-		}
-	}
-	return diff
+type Config struct {
+	SyncPolicy   SyncPolicy          `mapstructure:"sync-policy"`
+	DeletePolicy DeletePolicy        `mapstructure:"delete-policy"`
+	Registries   map[string]Registry `mapstructure:"registries"`
 }

@@ -27,7 +27,7 @@ var deleteCmd = &cobra.Command{
 	Short:   "删除镜像",
 	Long: `通过指定的匹配规则进行镜像删除：
 
-registry-manager delete -c registry-manager.yml`,
+registry-manager delete -c config.yml`,
 	Run: func(cmd *cobra.Command, args []string) {
 		delete.Run()
 	},
