@@ -4,38 +4,48 @@
 
 ⚠️ **警告** ⚠️ 如果`tag A`和`tag B`都指向同一个`image`，那么当你在删除`tag A`时，`tag B`也将被删除。
 
-### 安装registry-manager
-
-```bash
-go get -u github.com/TimeBye/registry-manager
-```
-
-> 也可以直接[下载](https://github.com/TimeBye/registry-manager/releases)编译好的可执行文件。
-
 ### 使用registry-manager进行软删除
 
-- 编写配置文件`registry-manager.yml`
+- 编写配置文件`config.yml`
 ```yaml
-# 仓库相关信息
-server: https://harbor.io/
-username: admin
-password: Harbor12345
-# 自签名证书请设置为true
-insecure-skip-tls-verify: true
+# 所有镜像仓库地址
+registries:
+  # 镜像仓库名称，自定义即可
+  harbor:
+    # 镜像仓库地址
+    registry: https://harbor.io
+    # 镜像仓库管理员用户名
+    username: admin
+    # 镜像仓库管理员密码
+    password: harbor12345
+    # 是否跳过证书检查
+    insecure: false
+  aliyun:
+    registry: https://registry.aliyun.com
+    username: admin
+    password: harbor12345
+    insecure: false
 
+# 删除策略
 delete-policy:
+  # 需要删除的仓库名
+  registries:
+    - harbor
+  repositories:
+  # 若执行中断，指定起始仓库序号，默认 0
+  start: 0
   # 仅模拟运行，不真实删除，默认启用
   dry-run: true
-  # 删除以现在时间为基础以前的镜像，单位为小时，默认72
-  interval-hour: 72
-  # 至少保留镜像个数，默认10
-  mix-count: 15
+  # 保留会被删除的镜像个数，默认 10
+  mix-count: 10
+  # 是否删除不符合语义化版本的 tag
+  sem-ver: false
   # 镜像tag删除策略
   tags:
     # 删除策略
     include:
       # 按关键字进行删除
-      keys: release,hotfix,feature
+      keys: develop,release,hotfix,feature,2018,2019
       # 按正则表达式删除
       regex:
     # 排除策略，删除策略与排除策略都匹配，以排除策略为准
@@ -43,13 +53,33 @@ delete-policy:
       # 按关键字进行排除
       keys:
       # 按正则表达式排除
-      regex: latest|^master$|^[Vv]?(\d+(\.\d+){1,2})$
+      regex: ^latest$|^master$|^[Vv]?(\d+(\.\d+){1,2})$
+
+# 同步策略
+sync-policy:
+  # 源仓库
+  from: harbor
+  # 目标仓库
+  to: aliyun
+  # 需要同步的镜像
+  repositories:
+    # 若指定tag，则只同步该镜像
+    - devlop/myapp:0.1.0
+    # 未指定tag，则同步所有tag
+    - devlop/hello-world
+  # 替换规则
+  replace:
+    - old: devlop
+      new: prod
+  # 需要同步的tag筛选规则
+  filters:
+    - '^\d+\.\d+\.\d+(-alpha\.\d+)?$'
 ```
 
-- 运行并指定配置文件位置
+- 使用 docker 命令运行
 
 ```bash
-registry-manager delete -c delete_policy.yml
+docker run -v $PWD/config.yml:/config.yml setzero/registry-manager registry-manager delete -c /config.yml
 ```
 
 ### 存储回收
@@ -57,8 +87,6 @@ registry-manager delete -c delete_policy.yml
 #### Harbor v1.7.0及以上版本
 
 Harbor从v1.7.0版本开始支持不停机进行[在线存储回收](https://github.com/goharbor/harbor/blob/master/docs/user_guide.md#online-garbage-collection)。在调用本程序进行软删除后，系统管理员可以通过单击“管理”下“配置”部分的“垃圾回收”选项卡来配置或触发存储回收。
-
-![img](https://github.com/goharbor/harbor/raw/master/docs/img/gc_now.png)
 
 👋 **注意** 👋在执行存储回收时，Harbor将进入只读模式，并且禁止对 docker registry 进行任何修改。换而言之就是此时只能拉镜像不能推镜像。
 
