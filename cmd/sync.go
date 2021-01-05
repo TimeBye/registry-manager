@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"github.com/TimeBye/registry-manager/pkg/sync"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +28,7 @@ var syncCmd = &cobra.Command{
 
 registry-manager sync -c config.yml`,
 	Run: func(cmd *cobra.Command, args []string) {
+		sync.Run()
 	},
 }
 
