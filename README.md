@@ -79,7 +79,13 @@ sync-policy:
 - 使用 docker 命令运行
 
 ```bash
-docker run -v $PWD/config.yml:/config.yml setzero/registry-manager registry-manager delete -c /config.yml
+# 删除 tag
+docker run -v $PWD/config.yml:/config.yml \
+    setzero/registry-manager registry-manager delete -c /config.yml
+
+# 同步镜像
+docker run -v $PWD/config.yml:/config.yml \
+    setzero/registry-manager registry-manager sync -c /config.yml
 ```
 
 ### 存储回收
