@@ -22,6 +22,8 @@ import (
 	"github.com/x-mod/glog"
 )
 
+var repositories = make([]string, 0)
+
 func Run() {
 	deletePolicy := &global.Manager.DeletePolicy
 	deletePolicy.Init()
@@ -34,9 +36,11 @@ func Run() {
 			} else {
 				registryClient, _ = registry.NewInsecure(r.Url, r.Username, r.Password)
 			}
-			repositories, err := registryClient.Repositories()
+			var err error
+			repositories, err = registryClient.Repositories()
 			utils.CheckErr(err)
-			deletePolicy.Repositories = repositories
+		} else {
+			repositories = deletePolicy.Repositories
 		}
 		deleteTags(reg)
 	}
@@ -44,11 +48,11 @@ func Run() {
 
 func deleteTags(r string) {
 	deletePolicy := &global.Manager.DeletePolicy
-	repositoriesCount := len(deletePolicy.Repositories)
+	repositoriesCount := len(repositories)
 	glog.Infof("获取到仓库数量：%d", repositoriesCount)
 	for i := deletePolicy.Start; i < repositoriesCount; i++ {
-		glog.Infof("当前处理第 %d/%d 个仓库: %s", i+1, repositoriesCount, deletePolicy.Repositories[i])
-		tags := skopeo.Tags(r, deletePolicy.Repositories[i])
+		glog.Infof("当前处理第 %d/%d 个仓库: %s", i+1, repositoriesCount, repositories[i])
+		tags := skopeo.Tags(r, repositories[i])
 		tagsTotal := len(tags.Tags)
 		glog.Infof("仓库：%s，所有 Tag 总数：%d，%+v", tags.Repository, tagsTotal, tags.Tags)
 		if tagsTotal <= deletePolicy.MixCount {
@@ -63,7 +67,7 @@ func deleteTags(r string) {
 				for _, tag := range noSemVerTags {
 					glog.Infof("删除镜像: %s:%s", tags.Repository, tag)
 					if !deletePolicy.DryRun {
-						skopeo.Delete(r, deletePolicy.Repositories[i], tag)
+						skopeo.Delete(r, repositories[i], tag)
 					}
 				}
 			}
@@ -75,7 +79,7 @@ func deleteTags(r string) {
 			for _, tag := range needDeleteTags[:count] {
 				glog.Infof("删除镜像: %s:%s", tags.Repository, tag)
 				if !deletePolicy.DryRun {
-					skopeo.Delete(r, deletePolicy.Repositories[i], tag)
+					skopeo.Delete(r, repositories[i], tag)
 				}
 			}
 		}
