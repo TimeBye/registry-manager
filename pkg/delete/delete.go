@@ -51,7 +51,7 @@ func deleteTags(r string) {
 	repositoriesCount := len(repositories)
 	glog.Infof("获取到仓库数量：%d", repositoriesCount)
 	for i := deletePolicy.Start; i < repositoriesCount; i++ {
-		glog.Infof("当前处理第 %d/%d 个仓库: %s", i+1, repositoriesCount, repositories[i])
+		glog.Infof("当前处理第 %d/%d 个仓库：%s", i+1, repositoriesCount, repositories[i])
 		tags := skopeo.Tags(r, repositories[i])
 		tagsTotal := len(tags.Tags)
 		glog.Infof("仓库：%s，所有 Tag 总数：%d，%+v", tags.Repository, tagsTotal, tags.Tags)
@@ -65,7 +65,7 @@ func deleteTags(r string) {
 			glog.Infof("仓库：%s，非语义化 Tag 总数：%d，%+v", tags.Repository, len(noSemVerTags), noSemVerTags)
 			if deletePolicy.SemVer {
 				for _, tag := range noSemVerTags {
-					glog.Infof("删除镜像: %s:%s", tags.Repository, tag)
+					glog.Infof("删除镜像：%s:%s", tags.Repository, tag)
 					if !deletePolicy.DryRun {
 						skopeo.Delete(r, repositories[i], tag)
 					}
