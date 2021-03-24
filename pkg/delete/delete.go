@@ -20,6 +20,7 @@ import (
 	"github.com/TimeBye/registry-manager/pkg/skopeo"
 	"github.com/TimeBye/registry-manager/pkg/utils"
 	"github.com/x-mod/glog"
+	"sync"
 )
 
 var repositories = make([]string, 0)
@@ -61,13 +62,18 @@ func deleteTags(r string) {
 		needKeepTags, needDeleteTags, noSemVerTags := deletePolicy.AnalysisTags(tags.Tags)
 		glog.Infof("仓库：%s，需保留的 Tag 总数：%d，%+v", tags.Repository, len(needKeepTags), needKeepTags)
 
+		wg := &sync.WaitGroup{}
 		if len(noSemVerTags) > 0 {
 			glog.Infof("仓库：%s，非语义化 Tag 总数：%d，%+v", tags.Repository, len(noSemVerTags), noSemVerTags)
 			if deletePolicy.SemVer {
 				for _, tag := range noSemVerTags {
+					wg.Add(1)
 					glog.Infof("删除镜像：%s:%s", tags.Repository, tag)
 					if !deletePolicy.DryRun {
-						skopeo.Delete(r, repositories[i], tag)
+						go skopeo.Delete(r, repositories[i], tag, wg)
+					}
+					if (i+1)%global.ProcessLimit == 0 {
+						wg.Wait()
 					}
 				}
 			}
@@ -77,11 +83,16 @@ func deleteTags(r string) {
 		if count > 0 {
 			glog.Infof("仓库：%s，需删除的 Tag 总数：%d，%+v", tags.Repository, count, needDeleteTags[:count])
 			for _, tag := range needDeleteTags[:count] {
+				wg.Add(1)
 				glog.Infof("删除镜像: %s:%s", tags.Repository, tag)
 				if !deletePolicy.DryRun {
-					skopeo.Delete(r, repositories[i], tag)
+					skopeo.Delete(r, repositories[i], tag, wg)
+				}
+				if (i+1)%global.ProcessLimit == 0 {
+					wg.Wait()
 				}
 			}
 		}
+		wg.Wait()
 	}
 }

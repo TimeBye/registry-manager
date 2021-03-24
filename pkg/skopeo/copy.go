@@ -53,20 +53,16 @@ func generateCopyArgs(repository, tag string) []string {
 	cmd = append(cmd, "copy")
 	cmd = append(cmd, "--all")
 	if fromR.Username != "" && fromR.Password != "" {
-		cmd = append(cmd, "--src-creds")
-		cmd = append(cmd, fmt.Sprintf("%s:%s", fromR.Username, fromR.Password))
+		cmd = append(cmd, fmt.Sprintf("--src-creds=%s:%s", fromR.Username, fromR.Password))
 	}
 	if toR.Username != "" && toR.Password != "" {
-		cmd = append(cmd, "--dest-creds")
-		cmd = append(cmd, fmt.Sprintf("%s:%s", toR.Username, toR.Password))
+		cmd = append(cmd, fmt.Sprintf("--dest-creds=%s:%s", toR.Username, toR.Password))
 	}
 	if fromR.Insecure {
-		cmd = append(cmd, "--src-tls-verify")
-		cmd = append(cmd, "false")
+		cmd = append(cmd, "--src-tls-verify=false")
 	}
 	if toR.Insecure {
-		cmd = append(cmd, "--dest-tls-verify")
-		cmd = append(cmd, "false")
+		cmd = append(cmd, "--dest-tls-verify=false")
 	}
 	fUri, err := url.Parse(fromR.Url)
 	if err != nil {

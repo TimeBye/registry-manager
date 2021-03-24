@@ -55,12 +55,10 @@ func generateListTagArgs(registry, repository string) []string {
 	cmd = append(cmd, "list-tags")
 	r := global.Manager.Registries[registry]
 	if r.Username != "" && r.Password != "" {
-		cmd = append(cmd, "--creds")
-		cmd = append(cmd, fmt.Sprintf("%s:%s", r.Username, r.Password))
+		cmd = append(cmd, fmt.Sprintf("--creds=%s:%s", r.Username, r.Password))
 	}
 	if r.Insecure {
-		cmd = append(cmd, "--tls-verify")
-		cmd = append(cmd, "false")
+		cmd = append(cmd, "--tls-verify=false")
 	}
 	rUri, err := url.Parse(r.Url)
 	if err != nil {

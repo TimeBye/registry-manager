@@ -21,9 +21,11 @@ import (
 	"github.com/x-mod/glog"
 	"net/url"
 	"strings"
+	"sync"
 )
 
-func Delete(registry, repository, tag string) {
+func Delete(registry, repository, tag string, wg *sync.WaitGroup) {
+	defer wg.Done()
 	retryStart := 1
 	tagDeleteArgs := generateDeleteTagArgs(registry, repository, tag)
 RePlay:
@@ -44,12 +46,10 @@ func generateDeleteTagArgs(registry, repository, tag string) []string {
 	cmd = append(cmd, "delete")
 	r := global.Manager.Registries[registry]
 	if r.Username != "" && r.Password != "" {
-		cmd = append(cmd, "--creds")
-		cmd = append(cmd, fmt.Sprintf("%s:%s", r.Username, r.Password))
+		cmd = append(cmd, fmt.Sprintf("--creds=%s:%s", r.Username, r.Password))
 	}
 	if r.Insecure {
-		cmd = append(cmd, "--tls-verify")
-		cmd = append(cmd, "false")
+		cmd = append(cmd, "--tls-verify=false")
 	}
 	rUri, err := url.Parse(r.Url)
 	if err != nil {
