@@ -1,6 +1,6 @@
 # registry-manager
 
-此程序调用 Registry API，按照镜像`tag`名称中是否包含定义的关键字或匹配的正则表达式进行删除。此操作只进行软删除，不回收镜像实际所占物理存储。
+此程序调用 Registry API 以及 [skopeo](https://github.com/containers/skopeo#skopeo-) ，按照镜像 `tag` 中是否包含定义的关键字或匹配的正则表达式进行删除或同步操作。删除操作只进行软删除，不回收镜像实际所占物理存储。
 
 ⚠️ **警告** ⚠️ 如果`tag A`和`tag B`都指向同一个`image`，那么当你在删除`tag A`时，`tag B`也将被删除。
 
@@ -8,7 +8,7 @@
 
 - 编写配置文件`config.yml`
 ```yaml
-# 所有镜像仓库地址
+# 所有镜像仓库地址(必填属性)
 registries:
   # 镜像仓库名称，自定义即可
   harbor:
@@ -18,15 +18,15 @@ registries:
     username: admin
     # 镜像仓库管理员密码
     password: harbor12345
-    # 是否跳过证书检查
-    insecure: false
+    # 是否跳过证书检查(默认：false)
+    insecure: true
   aliyun:
     registry: https://registry.aliyun.com
     username: admin
     password: harbor12345
     insecure: false
 
-# 删除策略
+# 删除策略(可选属性，只进行镜像同步则可以不写删除策略)
 delete-policy:
   # 需要删除的仓库名
   registries:
@@ -55,7 +55,7 @@ delete-policy:
       # 按正则表达式排除
       regex: ^latest$|^master$|^[Vv]?(\d+(\.\d+){1,2})$
 
-# 同步策略
+# 同步策略(可选属性，只进行镜像删除则可以不写同步策略)
 sync-policy:
   # 源仓库
   from: harbor
@@ -79,26 +79,30 @@ sync-policy:
 - 使用 docker 命令运行
 
 ```bash
-# 删除 tag
+# 删除镜像 tag
 docker run -v $PWD/config.yml:/config.yml \
     setzero/registry-manager registry-manager delete -c /config.yml
 
 # 同步镜像
 docker run -v $PWD/config.yml:/config.yml \
     setzero/registry-manager registry-manager sync -c /config.yml
+
+# 列出镜像库中所有镜像列表
+docker run -v $PWD/config.yml:/config.yml \
+    setzero/registry-manager registry-manager list -c /config.yml
 ```
 
 ### 存储回收
 
 #### Harbor v1.7.0及以上版本
 
-Harbor从v1.7.0版本开始支持不停机进行[在线存储回收](https://github.com/goharbor/harbor/blob/master/docs/user_guide.md#online-garbage-collection)。在调用本程序进行软删除后，系统管理员可以通过单击“管理”下“配置”部分的“垃圾回收”选项卡来配置或触发存储回收。
+Harbor从v1.7.0版本开始支持不停机进行[在线存储回收](https://github.com/goharbor/harbor/blob/v1.7.0/docs/user_guide.md#online-garbage-collection)。在调用本程序进行软删除后，系统管理员可以通过单击“管理”下“配置”部分的“垃圾回收”选项卡来配置或触发存储回收。
 
-👋 **注意** 👋在执行存储回收时，Harbor将进入只读模式，并且禁止对 docker registry 进行任何修改。换而言之就是此时只能拉镜像不能推镜像。
+👋 **注意** 👋 在执行存储回收时，Harbor将进入只读模式，并且禁止对 docker registry 进行任何修改。换而言之就是此时只能拉镜像不能推镜像。
 
 #### Harbor 1.7.0以前版本
 
-Harbor v1.7.0以前版本进行存储回收时需要手动切断外部访问以达到`禁止对 docker registry 进行任何修改`的目的。回收镜像所占存储[参考文档](https://github.com/docker/docker.github.io/blob/master/registry/garbage-collection.md#about-garbage-collection)。
+Harbor v1.7.0 以前版本进行存储回收时需要手动切断外部访问以达到`禁止对 docker registry 进行任何修改`的目的。回收镜像所占存储[参考文档](https://github.com/docker/docker.github.io/blob/v1.7.0/registry/garbage-collection.md#about-garbage-collection)。
 
 - 切断外部访问入口
 - 进入到`registry`容器中执行存储回收命令
@@ -170,5 +174,5 @@ Harbor v1.7.0以前版本进行存储回收时需要手动切断外部访问以�
   ```
 
 ### 参考文档：
-- https://github.com/vmware/harbor/blob/master/docs/user_guide.md#deleting-repositories
 - https://github.com/mortensteenrasmussen/docker-registry-manifest-cleanup
+- https://github.com/goharbor/harbor/blob/v1.7.0/docs/user_guide.md#deleting-repositories
