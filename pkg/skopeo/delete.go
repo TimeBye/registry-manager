@@ -29,7 +29,10 @@ func Delete(registry, repository, tag string, wg *sync.WaitGroup) {
 	retryStart := 1
 	tagDeleteArgs := generateDeleteTagArgs(registry, repository, tag)
 RePlay:
-	if retryStart <= global.Retry {
+	if retryStart > global.Retry {
+		global.FailedList[tagDeleteArgs[len(tagDeleteArgs)-1]] = ""
+		glog.Errorf("删除镜像已达最大重试次数：%d，%s", global.Retry, tagDeleteArgs[len(tagDeleteArgs)-1])
+	} else {
 		tagDeleteCmd := cmd.NewCmd("skopeo", tagDeleteArgs...)
 		result := <-tagDeleteCmd.Start()
 		if result.Exit != 0 {

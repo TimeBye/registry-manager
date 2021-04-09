@@ -15,6 +15,7 @@
 package delete
 
 import (
+	"fmt"
 	"github.com/TimeBye/docker-registry-client/registry"
 	"github.com/TimeBye/registry-manager/pkg/global"
 	"github.com/TimeBye/registry-manager/pkg/skopeo"
@@ -44,6 +45,18 @@ func Run() {
 			repositories = deletePolicy.Repositories
 		}
 		deleteTags(reg)
+	}
+	if len(global.FailedList) > 0 {
+		glog.Exitf("有删除失败的镜像，列表如下：%s",
+			func() string {
+				msg := ""
+				for k, _ := range global.FailedList {
+					msg = fmt.Sprintf("%s\n%s", msg, k)
+				}
+				return msg
+			}())
+	} else {
+		glog.Info("删除镜像成功")
 	}
 }
 
@@ -86,7 +99,7 @@ func deleteTags(r string) {
 				wg.Add(1)
 				glog.Infof("删除镜像: %s:%s", tags.Repository, tag)
 				if !deletePolicy.DryRun {
-					skopeo.Delete(r, repositories[i], tag, wg)
+					go skopeo.Delete(r, repositories[i], tag, wg)
 				}
 				if (i+1)%global.ProcessLimit == 0 {
 					wg.Wait()

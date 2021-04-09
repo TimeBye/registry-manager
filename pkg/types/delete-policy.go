@@ -106,7 +106,7 @@ func (d *DeletePolicy) AnalysisTags(tags []string) (needKeepTags, needDeleteTags
 	}
 	sort.Sort(version.Collection(needDeleteTagsVersion))
 	for i, tag := range needDeleteTagsVersion {
-		needDeleteTags[i] = tag.String()
+		needDeleteTags[i] = tag.Original()
 	}
 
 	return
