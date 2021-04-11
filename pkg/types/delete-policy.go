@@ -22,13 +22,10 @@ import (
 
 	"github.com/hashicorp/go-version"
 	"github.com/x-mod/glog"
-
-	"github.com/TimeBye/registry-manager/pkg/utils"
 )
 
 type DeletePolicy struct {
 	Registries   []string `mapstructure:"registries"`
-	Repositories []string `mapstructure:"repositories"`
 	Start        int      `mapstructure:"start"`
 	DryRun       bool     `mapstructure:"dry-run"`
 	SemVer       bool     `mapstructure:"sem-ver"`
@@ -114,25 +111,33 @@ func (d *DeletePolicy) AnalysisTags(tags []string) (needKeepTags, needDeleteTags
 
 func (d *DeletePolicy) NeedDelete(tag string) bool {
 	match, err := regexp.MatchString(d.Tags.Exclude.Regex, tag)
-	utils.CheckErr(err)
+	if err != nil {
+		glog.Error(err)
+	}
 	if match {
 		glog.V(2).Infof("跳过 %s ，因为匹配排除正则: %s", tag, d.Tags.Exclude.Regex)
 		return false
 	}
 	match, err = regexp.MatchString(d.Tags.Exclude.KeysRegex, tag)
-	utils.CheckErr(err)
+	if err != nil {
+		glog.Error(err)
+	}
 	if match {
 		glog.V(2).Infof("跳过 %s ，因为匹配排除关键字: %s", tag, d.Tags.Exclude.KeysRegex)
 		return false
 	}
 	match, err = regexp.MatchString(d.Tags.Include.Regex, tag)
-	utils.CheckErr(err)
+	if err != nil {
+		glog.Error(err)
+	}
 	if match {
 		glog.V(2).Infof("删除 %s ，因为匹配删除正则: %s", tag, d.Tags.Include.Regex)
 		return true
 	}
 	match, err = regexp.MatchString(d.Tags.Include.KeysRegex, tag)
-	utils.CheckErr(err)
+	if err != nil {
+		glog.Error(err)
+	}
 	if match {
 		glog.V(2).Infof("删除 %s ，因为匹配删除关键字: %s", tag, d.Tags.Include.KeysRegex)
 		return true

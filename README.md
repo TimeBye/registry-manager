@@ -20,6 +20,10 @@ registries:
     password: harbor12345
     # 是否跳过证书检查(默认：false)
     insecure: true
+    # 需要删除的项目名，不写则获取所有
+    repositories:
+      - library/redis
+      - library/mysql
   aliyun:
     registry: https://registry.aliyun.com
     username: admin
@@ -28,10 +32,10 @@ registries:
 
 # 删除策略(可选属性，只进行镜像同步则可以不写删除策略)
 delete-policy:
-  # 需要删除的仓库名
+  # 需要删除的仓库
   registries:
     - harbor
-  repositories:
+    - aliyun
   # 若执行中断，指定起始仓库序号，默认 0
   start: 0
   # 仅模拟运行，不真实删除，默认启用

@@ -18,10 +18,14 @@ registries:
 
 # 删除策略
 delete-policy:
-  # 需要删除的仓库名
+  # 需要删除的仓库
   registries:
     - harbor
+    - aliyun
+  # 需要删除的项目名
   repositories:
+    - library/redis
+    - library/mysql
   # 若执行中断，指定起始仓库序号，默认 0
   start: 0
   # 仅模拟运行，不真实删除，默认启用

@@ -14,16 +14,6 @@
 
 package utils
 
-import (
-	"github.com/x-mod/glog"
-)
-
-func CheckErr(err error) {
-	if err != nil {
-		glog.Error(err)
-	}
-}
-
 func Difference(sliceA []string, sliceB []string) []string {
 	diff := make([]string, 0)
 	diffMap := make(map[string]int)

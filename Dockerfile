@@ -15,5 +15,6 @@ RUN apk --no-cache add \
 RUN cp /etc/apk/repositories /etc/apk/repositories.bak; \
         sed -i 's dl-cdn.alpinelinux.org mirrors.aliyun.com g' /etc/apk/repositories
 COPY --from=builder /go/src/github.com/TimeBye/registry-manager/registry-manager /usr/bin/registry-manager
+ADD https://raw.githubusercontent.com/containers/skopeo/master/default-policy.json /etc/containers/policy.json
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["registry-manager"]

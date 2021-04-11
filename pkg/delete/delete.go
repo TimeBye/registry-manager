@@ -19,7 +19,6 @@ import (
 	"github.com/TimeBye/docker-registry-client/registry"
 	"github.com/TimeBye/registry-manager/pkg/global"
 	"github.com/TimeBye/registry-manager/pkg/skopeo"
-	"github.com/TimeBye/registry-manager/pkg/utils"
 	"github.com/x-mod/glog"
 	"sync"
 )
@@ -31,7 +30,7 @@ func Run() {
 	deletePolicy.Init()
 	for _, reg := range deletePolicy.Registries {
 		r := global.Manager.Registries[reg]
-		if len(deletePolicy.Repositories) == 0 {
+		if len(r.Repositories) == 0 {
 			registryClient := &registry.Registry{}
 			if !r.Insecure {
 				registryClient, _ = registry.New(r.Url, r.Username, r.Password)
@@ -40,9 +39,11 @@ func Run() {
 			}
 			var err error
 			repositories, err = registryClient.Repositories()
-			utils.CheckErr(err)
+			if err != nil {
+				glog.Error(err)
+			}
 		} else {
-			repositories = deletePolicy.Repositories
+			repositories = r.Repositories
 		}
 		deleteTags(reg)
 	}
@@ -64,9 +65,9 @@ func deleteTags(r string) {
 	deletePolicy := &global.Manager.DeletePolicy
 	repositoriesCount := len(repositories)
 	glog.Infof("获取到仓库数量：%d", repositoriesCount)
-	for i := deletePolicy.Start; i < repositoriesCount; i++ {
-		glog.Infof("当前处理第 %d/%d 个仓库：%s", i+1, repositoriesCount, repositories[i])
-		tags := skopeo.Tags(r, repositories[i])
+	for startIndex := deletePolicy.Start; startIndex < repositoriesCount; startIndex++ {
+		glog.Infof("当前处理第 %d/%d 个仓库：%s", startIndex+1, repositoriesCount, repositories[startIndex])
+		tags := skopeo.Tags(r, repositories[startIndex])
 		tagsTotal := len(tags.Tags)
 		glog.Infof("仓库：%s，所有 Tag 总数：%d，%+v", tags.Repository, tagsTotal, tags.Tags)
 		if tagsTotal <= deletePolicy.MixCount {
@@ -79,13 +80,13 @@ func deleteTags(r string) {
 		if len(noSemVerTags) > 0 {
 			glog.Infof("仓库：%s，非语义化 Tag 总数：%d，%+v", tags.Repository, len(noSemVerTags), noSemVerTags)
 			if deletePolicy.SemVer {
-				for _, tag := range noSemVerTags {
+				for tagIndex, tag := range noSemVerTags {
 					wg.Add(1)
 					glog.Infof("删除镜像：%s:%s", tags.Repository, tag)
 					if !deletePolicy.DryRun {
-						go skopeo.Delete(r, repositories[i], tag, wg)
+						go skopeo.Delete(r, repositories[startIndex], tag, wg)
 					}
-					if (i+1)%global.ProcessLimit == 0 {
+					if (tagIndex+1)%global.ProcessLimit == 0 {
 						wg.Wait()
 					}
 				}
@@ -95,13 +96,13 @@ func deleteTags(r string) {
 		count := len(needDeleteTags) - deletePolicy.MixCount
 		if count > 0 {
 			glog.Infof("仓库：%s，需删除的 Tag 总数：%d，%+v", tags.Repository, count, needDeleteTags[:count])
-			for _, tag := range needDeleteTags[:count] {
+			for tagIndex, tag := range needDeleteTags[:count] {
 				wg.Add(1)
 				glog.Infof("删除镜像: %s:%s", tags.Repository, tag)
 				if !deletePolicy.DryRun {
-					go skopeo.Delete(r, repositories[i], tag, wg)
+					go skopeo.Delete(r, repositories[startIndex], tag, wg)
 				}
-				if (i+1)%global.ProcessLimit == 0 {
+				if (tagIndex+1)%global.ProcessLimit == 0 {
 					wg.Wait()
 				}
 			}

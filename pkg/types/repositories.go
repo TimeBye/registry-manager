@@ -15,10 +15,11 @@
 package types
 
 type Registry struct {
-	Url      string `mapstructure:"registry"`
-	Username string `mapstructure:"username"`
-	Password string `mapstructure:"password"`
-	Insecure bool   `mapstructure:"insecure"`
+	Url          string   `mapstructure:"registry"`
+	Username     string   `mapstructure:"username"`
+	Password     string   `mapstructure:"password"`
+	Insecure     bool     `mapstructure:"insecure"`
+	Repositories []string `mapstructure:"repositories"`
 }
 
 type Config struct {

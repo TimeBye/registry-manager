@@ -5,7 +5,7 @@ import (
 	"github.com/TimeBye/docker-registry-client/registry"
 	"github.com/TimeBye/registry-manager/pkg/global"
 	"github.com/TimeBye/registry-manager/pkg/skopeo"
-	"github.com/TimeBye/registry-manager/pkg/utils"
+	"github.com/x-mod/glog"
 )
 
 func Run() {
@@ -19,7 +19,9 @@ func Run() {
 		}
 		var err error
 		repositories, err := registryClient.Repositories()
-		utils.CheckErr(err)
+		if err != nil {
+			glog.Error(err)
+		}
 		for _, repo := range repositories {
 			tags := skopeo.Tags(k, repo)
 			for _, tag := range tags.Tags {
