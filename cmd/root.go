@@ -16,10 +16,9 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/TimeBye/registry-manager/pkg/global"
 	"github.com/TimeBye/registry-manager/pkg/types"
-	"os"
+	"net/url"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -42,8 +41,7 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		glog.Exitf("执行出错：%s", err.Error())
 	}
 }
 
@@ -76,6 +74,10 @@ func initConfig() {
 			DryRun:   true,
 			MixCount: 10,
 		},
+		SyncPolicy: types.SyncPolicy{
+			DryRun: true,
+			Filters: []string{".*"},
+		},
 	}
 	b, err := yaml.Marshal(global.Manager)
 	if err != nil {
@@ -90,14 +92,19 @@ func initConfig() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	if err := viper.MergeInConfig(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		glog.Exitf("合并yaml出错：%s", err.Error())
 	}
 
 	err = viper.Unmarshal(global.Manager)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		glog.Exitf("解析yaml出错：%s", err.Error())
+	}
+
+	for _, registry := range global.Manager.Registries {
+		registry.Uri, err = url.Parse(registry.Url)
+		if err != nil {
+			glog.Exitf("解析URL出错：%s", err.Error())
+		}
 	}
 
 	glog.V(4).Infof("%+v", global.Manager)

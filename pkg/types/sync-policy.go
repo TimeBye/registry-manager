@@ -22,10 +22,12 @@ import (
 )
 
 type SyncPolicy struct {
-	From         string   `mapstructure:"from"`
-	To           string   `mapstructure:"to"`
-	Repositories []string `mapstructure:"repositories"`
-	Replace      []struct {
+	FromObj Registry
+	ToObj   Registry
+	From    string `mapstructure:"from"`
+	To      string `mapstructure:"to"`
+	DryRun  bool   `mapstructure:"dry-run"`
+	Replace []struct {
 		Old string `mapstructure:"old"`
 		New string `mapstructure:"new"`
 	} `mapstructure:"replace"`
@@ -64,4 +66,3 @@ func (c *SyncPolicy) ReplaceName(name string) string {
 	}
 	return name
 }
-

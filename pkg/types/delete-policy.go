@@ -25,12 +25,13 @@ import (
 )
 
 type DeletePolicy struct {
-	Registries   []string `mapstructure:"registries"`
-	Start        int      `mapstructure:"start"`
-	DryRun       bool     `mapstructure:"dry-run"`
-	SemVer       bool     `mapstructure:"sem-ver"`
-	MixCount     int      `mapstructure:"mix-count"`
-	Tags         struct {
+	RegistriesObj []Registry
+	Registries    []string `mapstructure:"registries"`
+	Start         int      `mapstructure:"start"`
+	DryRun        bool     `mapstructure:"dry-run"`
+	SemVer        bool     `mapstructure:"sem-ver"`
+	MixCount      int      `mapstructure:"mix-count"`
+	Tags          struct {
 		Include struct {
 			Keys      string `mapstructure:"keys"`
 			Regex     string `mapstructure:"regex"`
@@ -58,7 +59,7 @@ func generateRegexByKeys(keys string) string {
 	return fmt.Sprintf(".*%s.*", strings.Replace(keys, ",", ".*|.*", -1))
 }
 
-// 初始化 registry 客户端及检验参数
+// Init 初始化 registry 客户端及检验参数
 func (d *DeletePolicy) Init() {
 	// 根据关键字生成正则表达式
 	d.Tags.Include.KeysRegex = generateRegexByKeys(d.Tags.Include.Keys)

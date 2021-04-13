@@ -16,6 +16,7 @@ package sync
 
 import (
 	"fmt"
+	client "github.com/TimeBye/docker-registry-client/registry"
 	"github.com/TimeBye/registry-manager/pkg/global"
 	"github.com/TimeBye/registry-manager/pkg/skopeo"
 	"github.com/TimeBye/registry-manager/pkg/types"
@@ -25,9 +26,38 @@ import (
 	"sync"
 )
 
+var repositories = make([]string, 0)
+
 func Run() {
-	syncPolicy := global.Manager.SyncPolicy
-	for _, repository := range syncPolicy.Repositories {
+	syncPolicy := &global.Manager.SyncPolicy
+	var ok bool
+	syncPolicy.FromObj, ok = global.Manager.Registries[syncPolicy.From]
+	if !ok {
+		glog.Exitf("未在 registries 中找到 from 仓库: %s", syncPolicy.From)
+	}
+	syncPolicy.ToObj, ok = global.Manager.Registries[syncPolicy.To]
+	if !ok {
+		glog.Exitf("未在 registries 中找到 to 仓库: %s", syncPolicy.To)
+	}
+
+	from := &syncPolicy.FromObj
+	if len(from.Repositories) > 0 {
+		repositories = from.Repositories
+	} else {
+		registryClient := &client.Registry{}
+		if !from.Insecure {
+			registryClient, _ = client.New(from.Url, from.Username, from.Password)
+		} else {
+			registryClient, _ = client.NewInsecure(from.Url, from.Username, from.Password)
+		}
+		var err error
+		repositories, err = registryClient.Repositories()
+		if err != nil {
+			glog.Exitf("获取仓库出错：%s", err.Error())
+		}
+	}
+
+	for _, repository := range repositories {
 		repositoryAndTag := strings.Split(repository, ":")
 		if len(repositoryAndTag) == 1 {
 			syncAll(repository)
@@ -37,6 +67,7 @@ func Run() {
 			glog.Exitf("镜像地址错误：%s", repository)
 		}
 	}
+
 	if len(global.FailedList) > 0 {
 		glog.Exitf("同步失败，列表如下：%s",
 			func() string {
@@ -52,9 +83,9 @@ func Run() {
 }
 
 func syncAll(repository string, tags ...string) {
+	syncPolicy := &global.Manager.SyncPolicy
 	fromTagList := &types.TagList{}
-	syncPolicy := global.Manager.SyncPolicy
-	fromTagList = skopeo.Tags(global.Manager.SyncPolicy.From, repository)
+	fromTagList = skopeo.Tags(syncPolicy.FromObj, repository)
 	glog.V(3).Infof("源库：%s\n获取到 Tag：%v", fromTagList.Repository, fromTagList.Tags)
 	if len(tags) == 0 {
 		filterFromTagList := syncPolicy.NeedSync(fromTagList.Tags)
@@ -64,7 +95,7 @@ func syncAll(repository string, tags ...string) {
 	}
 	glog.Infof("源库：%s\n过滤后 Tag：%v", fromTagList.Repository, fromTagList.Tags)
 
-	toTagList := skopeo.Tags(syncPolicy.To, syncPolicy.ReplaceName(repository))
+	toTagList := skopeo.Tags(syncPolicy.ToObj, syncPolicy.ReplaceName(repository))
 	glog.Infof("目标库：%s\n获取到 Tag：%v", toTagList.Repository, toTagList.Tags)
 
 	needSyncTags := utils.Difference(fromTagList.Tags, toTagList.Tags)
@@ -72,11 +103,13 @@ func syncAll(repository string, tags ...string) {
 
 	wg := &sync.WaitGroup{}
 	for i, tag := range needSyncTags {
-		wg.Add(1)
 		glog.Infof("当前同步：%d/%d，%s", i+1, len(needSyncTags), tag)
-		go skopeo.Copy(repository, tag, wg)
-		if (i+1)%global.ProcessLimit == 0 {
-			wg.Wait()
+		if !syncPolicy.DryRun {
+			wg.Add(1)
+			go skopeo.Copy(repository, tag, wg)
+			if (i+1)%global.ProcessLimit == 0 {
+				wg.Wait()
+			}
 		}
 	}
 	wg.Wait()

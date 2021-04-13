@@ -20,9 +20,11 @@ registries:
     password: harbor12345
     # 是否跳过证书检查(默认：false)
     insecure: true
-    # 需要删除的项目名，不写则获取所有
+    # 需要删除/同步的项目名，不写则获取所有
     repositories:
-      - library/redis
+      # 若指定tag，则只删除/同步该镜像
+      - library/redis:5.0.12
+      # 未指定tag，则删除/同步所有tag
       - library/mysql
   aliyun:
     registry: https://registry.aliyun.com
@@ -57,7 +59,7 @@ delete-policy:
       # 按关键字进行排除
       keys:
       # 按正则表达式排除
-      regex: ^latest$|^master$|^[Vv]?(\d+(\.\d+){1,2})$
+      regex: ^latest$|^master$|^[Vv]?(\d+(\.\d+){1,2})(-alpha\.\d+)?$
 
 # 同步策略(可选属性，只进行镜像删除则可以不写同步策略)
 sync-policy:
@@ -65,19 +67,13 @@ sync-policy:
   from: harbor
   # 目标仓库
   to: aliyun
-  # 需要同步的镜像
-  repositories:
-    # 若指定tag，则只同步该镜像
-    - devlop/myapp:0.1.0
-    # 未指定tag，则同步所有tag
-    - devlop/hello-world
   # 替换规则
   replace:
-    - old: devlop
+    - old: library
       new: prod
   # 需要同步的tag筛选规则
   filters:
-    - '^\d+\.\d+\.\d+(-alpha\.\d+)?$'
+    - '^[Vv]?(\d+(\.\d+){1,2})(-alpha\.\d+)?$'
 ```
 
 - 使用 docker 命令运行

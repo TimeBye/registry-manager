@@ -2,7 +2,7 @@ package list
 
 import (
 	"fmt"
-	"github.com/TimeBye/docker-registry-client/registry"
+	client "github.com/TimeBye/docker-registry-client/registry"
 	"github.com/TimeBye/registry-manager/pkg/global"
 	"github.com/TimeBye/registry-manager/pkg/skopeo"
 	"github.com/x-mod/glog"
@@ -10,23 +10,21 @@ import (
 
 func Run() {
 	registries := global.Manager.Registries
-	for k, v := range registries {
-		registryClient := &registry.Registry{}
-		if !v.Insecure {
-			registryClient, _ = registry.New(v.Url, v.Username, v.Password)
+	for _, registry := range registries {
+		registryClient := &client.Registry{}
+		if !registry.Insecure {
+			registryClient, _ = client.New(registry.Url, registry.Username, registry.Password)
 		} else {
-			registryClient, _ = registry.NewInsecure(v.Url, v.Username, v.Password)
+			registryClient, _ = client.NewInsecure(registry.Url, registry.Username, registry.Password)
 		}
-		var err error
 		repositories, err := registryClient.Repositories()
 		if err != nil {
-			glog.Error(err)
+			glog.Exitf("获取仓库出错：%s", err.Error())
 		}
-		for _, repo := range repositories {
-			tags := skopeo.Tags(k, repo)
+		for _, repository := range repositories {
+			tags := skopeo.Tags(registry, repository)
 			for _, tag := range tags.Tags {
-				fmt.Println(fmt.Sprintf("%s:%s",
-					tags.Repository, tag))
+				fmt.Println(fmt.Sprintf("%s:%s", tags.Repository, tag))
 			}
 		}
 	}

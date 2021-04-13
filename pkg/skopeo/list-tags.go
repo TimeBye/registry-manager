@@ -21,11 +21,10 @@ import (
 	"github.com/TimeBye/registry-manager/pkg/types"
 	"github.com/go-cmd/cmd"
 	"github.com/x-mod/glog"
-	"net/url"
 	"strings"
 )
 
-func Tags(registry, repository string) *types.TagList {
+func Tags(registry types.Registry, repository string) *types.TagList {
 	retryStart := 1
 	tagList := &types.TagList{}
 	tagListArgs := generateListTagArgs(registry, repository)
@@ -50,20 +49,15 @@ RePlay:
 	return tagList
 }
 
-func generateListTagArgs(registry, repository string) []string {
+func generateListTagArgs(registry types.Registry, repository string) []string {
 	cmd := make([]string, 0)
 	cmd = append(cmd, "list-tags")
-	r := global.Manager.Registries[registry]
-	if r.Username != "" && r.Password != "" {
-		cmd = append(cmd, fmt.Sprintf("--creds=%s:%s", r.Username, r.Password))
-	}
-	if r.Insecure {
+	if registry.Insecure {
 		cmd = append(cmd, "--tls-verify=false")
 	}
-	rUri, err := url.Parse(r.Url)
-	if err != nil {
-		glog.Exitf("解析URL出错：%s", err.Error())
+	if registry.Username != "" && registry.Password != "" {
+		cmd = append(cmd, fmt.Sprintf("--creds=%s:%s", registry.Username, registry.Password))
 	}
-	cmd = append(cmd, fmt.Sprintf("docker://%s/%s", rUri.Host, repository))
+	cmd = append(cmd, fmt.Sprintf("docker://%s/%s", registry.Uri.Host, repository))
 	return cmd
 }

@@ -17,14 +17,14 @@ package skopeo
 import (
 	"fmt"
 	"github.com/TimeBye/registry-manager/pkg/global"
+	"github.com/TimeBye/registry-manager/pkg/types"
 	"github.com/go-cmd/cmd"
 	"github.com/x-mod/glog"
-	"net/url"
 	"strings"
 	"sync"
 )
 
-func Delete(registry, repository, tag string, wg *sync.WaitGroup) {
+func Delete(registry types.Registry, repository, tag string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	retryStart := 1
 	tagDeleteArgs := generateDeleteTagArgs(registry, repository, tag)
@@ -44,20 +44,15 @@ RePlay:
 	}
 }
 
-func generateDeleteTagArgs(registry, repository, tag string) []string {
+func generateDeleteTagArgs(registry types.Registry, repository, tag string) []string {
 	cmd := make([]string, 0)
 	cmd = append(cmd, "delete")
-	r := global.Manager.Registries[registry]
-	if r.Username != "" && r.Password != "" {
-		cmd = append(cmd, fmt.Sprintf("--creds=%s:%s", r.Username, r.Password))
-	}
-	if r.Insecure {
+	if registry.Insecure {
 		cmd = append(cmd, "--tls-verify=false")
 	}
-	rUri, err := url.Parse(r.Url)
-	if err != nil {
-		glog.Exitf("解析URL出错：%s", err.Error())
+	if registry.Username != "" && registry.Password != "" {
+		cmd = append(cmd, fmt.Sprintf("--creds=%s:%s", registry.Username, registry.Password))
 	}
-	cmd = append(cmd, fmt.Sprintf("docker://%s/%s:%s", rUri.Host, repository, tag))
+	cmd = append(cmd, fmt.Sprintf("docker://%s/%s:%s", registry.Uri.Host, repository, tag))
 	return cmd
 }

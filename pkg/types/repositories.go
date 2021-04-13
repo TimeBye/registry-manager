@@ -14,7 +14,10 @@
 
 package types
 
+import "net/url"
+
 type Registry struct {
+	Uri          *url.URL
 	Url          string   `mapstructure:"registry"`
 	Username     string   `mapstructure:"username"`
 	Password     string   `mapstructure:"password"`

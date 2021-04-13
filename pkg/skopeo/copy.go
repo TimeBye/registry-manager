@@ -5,7 +5,6 @@ import (
 	"github.com/TimeBye/registry-manager/pkg/global"
 	"github.com/go-cmd/cmd"
 	"github.com/x-mod/glog"
-	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -64,16 +63,8 @@ func generateCopyArgs(repository, tag string) []string {
 	if toR.Insecure {
 		cmd = append(cmd, "--dest-tls-verify=false")
 	}
-	fUri, err := url.Parse(fromR.Url)
-	if err != nil {
-		glog.Exitf("解析URL出错：%s", err.Error())
-	}
-	tUri, err := url.Parse(toR.Url)
-	if err != nil {
-		glog.Exitf("解析URL出错：%s", err.Error())
-	}
-	cmd = append(cmd, fmt.Sprintf("docker://%s/%s:%s", fUri.Host, repository, tag))
-	cmd = append(cmd, fmt.Sprintf("docker://%s/%s:%s", tUri.Host,
+	cmd = append(cmd, fmt.Sprintf("docker://%s/%s:%s", fromR.Uri.Host, repository, tag))
+	cmd = append(cmd, fmt.Sprintf("docker://%s/%s:%s", toR.Uri.Host,
 		global.Manager.SyncPolicy.ReplaceName(repository), tag))
 	return cmd
 }
