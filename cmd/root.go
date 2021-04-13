@@ -75,6 +75,7 @@ func initConfig() {
 			MixCount: 10,
 		},
 		SyncPolicy: types.SyncPolicy{
+			Start:    0,
 			DryRun: true,
 			Filters: []string{".*"},
 		},

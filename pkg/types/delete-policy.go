@@ -25,7 +25,7 @@ import (
 )
 
 type DeletePolicy struct {
-	RegistriesObj []Registry
+	RegistriesObj []*Registry
 	Registries    []string `mapstructure:"registries"`
 	Start         int      `mapstructure:"start"`
 	DryRun        bool     `mapstructure:"dry-run"`

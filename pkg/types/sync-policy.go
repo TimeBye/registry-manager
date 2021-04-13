@@ -22,10 +22,11 @@ import (
 )
 
 type SyncPolicy struct {
-	FromObj Registry
-	ToObj   Registry
+	FromObj *Registry
+	ToObj   *Registry
 	From    string `mapstructure:"from"`
 	To      string `mapstructure:"to"`
+	Start   int    `mapstructure:"start"`
 	DryRun  bool   `mapstructure:"dry-run"`
 	Replace []struct {
 		Old string `mapstructure:"old"`

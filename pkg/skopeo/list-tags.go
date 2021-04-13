@@ -24,7 +24,7 @@ import (
 	"strings"
 )
 
-func Tags(registry types.Registry, repository string) *types.TagList {
+func Tags(registry *types.Registry, repository string) *types.TagList {
 	retryStart := 1
 	tagList := &types.TagList{}
 	tagListArgs := generateListTagArgs(registry, repository)
@@ -49,7 +49,7 @@ RePlay:
 	return tagList
 }
 
-func generateListTagArgs(registry types.Registry, repository string) []string {
+func generateListTagArgs(registry *types.Registry, repository string) []string {
 	cmd := make([]string, 0)
 	cmd = append(cmd, "list-tags")
 	if registry.Insecure {

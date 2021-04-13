@@ -24,7 +24,7 @@ import (
 	"sync"
 )
 
-func Delete(registry types.Registry, repository, tag string, wg *sync.WaitGroup) {
+func Delete(registry *types.Registry, repository, tag string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	retryStart := 1
 	tagDeleteArgs := generateDeleteTagArgs(registry, repository, tag)
@@ -44,7 +44,7 @@ RePlay:
 	}
 }
 
-func generateDeleteTagArgs(registry types.Registry, repository, tag string) []string {
+func generateDeleteTagArgs(registry *types.Registry, repository, tag string) []string {
 	cmd := make([]string, 0)
 	cmd = append(cmd, "delete")
 	if registry.Insecure {

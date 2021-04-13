@@ -26,7 +26,7 @@ type Registry struct {
 }
 
 type Config struct {
-	SyncPolicy   SyncPolicy          `mapstructure:"sync-policy"`
-	DeletePolicy DeletePolicy        `mapstructure:"delete-policy"`
-	Registries   map[string]Registry `mapstructure:"registries"`
+	SyncPolicy   SyncPolicy           `mapstructure:"sync-policy"`
+	DeletePolicy DeletePolicy         `mapstructure:"delete-policy"`
+	Registries   map[string]*Registry `mapstructure:"registries"`
 }

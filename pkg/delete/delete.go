@@ -69,7 +69,7 @@ func Run() {
 	}
 }
 
-func deleteTags(registry types.Registry) {
+func deleteTags(registry *types.Registry) {
 	deletePolicy := &global.Manager.DeletePolicy
 	repositoriesCount := len(repositories)
 	glog.Infof("获取到仓库数量：%d", repositoriesCount)

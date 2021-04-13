@@ -40,7 +40,7 @@ func Run() {
 		glog.Exitf("未在 registries 中找到 to 仓库: %s", syncPolicy.To)
 	}
 
-	from := &syncPolicy.FromObj
+	from := syncPolicy.FromObj
 	if len(from.Repositories) > 0 {
 		repositories = from.Repositories
 	} else {
@@ -57,7 +57,11 @@ func Run() {
 		}
 	}
 
-	for _, repository := range repositories {
+	repositoriesCount := len(repositories)
+	glog.Infof("获取到仓库数量：%d", repositoriesCount)
+	for startIndex := syncPolicy.Start; startIndex < repositoriesCount; startIndex++ {
+		repository := repositories[startIndex]
+		glog.Infof("当前处理第 %d/%d 个仓库：%s", startIndex+1, repositoriesCount, repository)
 		repositoryAndTag := strings.Split(repository, ":")
 		if len(repositoryAndTag) == 1 {
 			syncAll(repository)
