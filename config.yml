@@ -57,6 +57,8 @@ sync-policy:
   from: harbor
   # 目标仓库
   to: aliyun
+  # 若执行中断，指定起始仓库序号，默认 0
+  start: 0
   # 仅模拟运行，不真实删除，默认启用
   dry-run: true
   # 替换规则
