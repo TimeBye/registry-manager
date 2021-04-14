@@ -71,6 +71,8 @@ sync-policy:
   start: 0
   # 仅模拟运行，不真实删除，默认启用
   dry-run: true
+  # 两个库不进行对比，直接同步
+  force: false
   # 替换规则
   replace:
     - old: library

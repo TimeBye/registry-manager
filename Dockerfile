@@ -9,6 +9,7 @@ RUN apk --no-cache add \
         tini \
         curl \
         bash \
+        screen \
         ca-certificates; \
     apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/community skopeo; \
     skopeo -v
