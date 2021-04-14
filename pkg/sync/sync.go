@@ -99,8 +99,17 @@ func syncAll(repository string, tags ...string) {
 	}
 	glog.Infof("源库：%s\n过滤后 Tag：%v", fromTagList.Repository, fromTagList.Tags)
 
-	toTagList := skopeo.Tags(syncPolicy.ToObj, syncPolicy.ReplaceName(repository))
-	glog.Infof("目标库：%s\n获取到 Tag：%v", toTagList.Repository, toTagList.Tags)
+	var toTagList *types.TagList
+	if syncPolicy.Force {
+		toTagList = &types.TagList{
+			Repository: fmt.Sprintf("%s/%s",
+				syncPolicy.ToObj.Uri.Host, syncPolicy.ReplaceName(repository)),
+			Tags: []string{},
+		}
+	} else {
+		toTagList = skopeo.Tags(syncPolicy.ToObj, syncPolicy.ReplaceName(repository))
+		glog.Infof("目标库：%s\n获取到 Tag：%v", toTagList.Repository, toTagList.Tags)
+	}
 
 	needSyncTags := utils.Difference(fromTagList.Tags, toTagList.Tags)
 	glog.Infof("共计需同步 %d 个 Tag：%v", len(needSyncTags), needSyncTags)

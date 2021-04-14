@@ -28,6 +28,7 @@ type SyncPolicy struct {
 	To      string `mapstructure:"to"`
 	Start   int    `mapstructure:"start"`
 	DryRun  bool   `mapstructure:"dry-run"`
+	Force     bool   `mapstructure:"force"`
 	Replace []struct {
 		Old string `mapstructure:"old"`
 		New string `mapstructure:"new"`
